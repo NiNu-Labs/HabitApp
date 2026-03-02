@@ -1,7 +1,10 @@
 import logging
 
+from engine import Engine
+
 
 logger = logging.getLogger("HabitApp")
+
 
 def main():
     logging.basicConfig(filename='main.log', level=logging.INFO)
@@ -9,11 +12,13 @@ def main():
     
     
     while True:
+        # User Input
         raw = input("--> ").strip()
-        
+        # Prüfen ob input leer dann continue
         if not raw:
             logger.info("No Valid Input")
             continue
+        
         cmd = raw.split()
         
         
