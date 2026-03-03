@@ -5,27 +5,59 @@ import pandas as pd
 
 class Habit:
     """ """
-    def __init__(self, name, type, period, frequency, start_date = None, habit_id = None, active = True):
+    def __init__(self, name, type, period, frequency, interval, start_date = None, start_date = None, habit_id = None, active = True):
         self.habit_id = habit_id or str(uuid.uuid4())
         self.name = name
         self.type = type 
-        self.period = period # 'D' = Täglich, 'W' = Wöchentlich, 'MS' = Monatsanfang
-        self.frequency = frequency
+        self.period = period #z.B. 3M = Dauer 3 Monate
+        self.frequency = frequency #z.B. 3W = 3x pro Woche
+        self.interval = interval #häufigkeit bei "D"
         self.start_date = start_date or datetime.now().date().isoformat() 
+        self.end_date = end_date
         self.active = active
+
     def calc_dates(self):
-        start = pd.to_datetime(self.start_date)
-        end = start + pd.DateOffset(end_date)
-    
+        
+        #zerlegen von period
+        p_num = int("".join(filter(str.isdigit, self.period)))
+        p_unit = "".join(filter(str.isalpha, self.period)).upper()
+
+        #Mapping Pandas DateOffset (echter Kalender)
+        offset_map = {"D": "days", "W": "weeks"}
+        unit_key = offset_map.get(p_unit, "days")
+
+        #Berechnung genaues Ende im Kalender
+        end_date = self.start_date + pd.DateOffset(**{unit_key: p_num})
+
+        #zerlegen von frequency
+        f_num = int("".join(filter(str.isdigit, self.period)))
+        f_unit = "".join(filter(str.isalpha, self.period)).upper()
+
+        if f_unit == 'W':
+            # "3x pro Woche" -> Intervall alle 2.3 Tage
+            actual_freq = f"{round(7/f_num, 1)}D"
+        elif f_unit == 'M':
+            # "X mal pro Monat" -> Intervall basierend auf ø 30.4 Tagen
+            actual_freq = f"{round(30.4/f_num, 1)}D"
+        else:
+            # Standard: Täglich
+            actual_freq = 'D'
+
+        if self.period == "D":
+            pass
+        elif self.period == "W":
+            liste = []
+            for i in pd.date_range(start='2026-03-02', periods=3, freq='W'):
+                liste.extend(pd.date_range(start=i, periods=3, freq='56h'))
+
+            s = sorted(list(set(liste)))
+            out = [[datum, False] for datum in [d.strftime('%Y-%m-%d') for d in s]]
+            return out
+            
     # "3x pro Woche" bilden wir als '3 mal pro Woche' ab (z.B. Mo, Mi, Fr)
     # Hier nutzen wir eine wöchentliche Frequenz mit Anzahl
     # Einfacher Workaround für '3x pro Woche': Alle 2.3 Tage oder manuell:
-    
-        if self.frequency == "3W":
-        # Erzeugt Termine mit Abstand von 2 Tagen (ca. 3x pro Woche)
-            return pd.date_range(start=self.start_date, end=end, freq='2D')
 
-        return pd.date_range(start=self.start_date, periods=self.period, freq=self.frequency)
         
 
         
