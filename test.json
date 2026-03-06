@@ -1,73 +1,33 @@
 {
     "habits": [
         {
-            "habit_id": "ad041caa-60fa-44ba-a88e-52b673b1ced9",
-            "name": "fdgd",
-            "type": "bad",
-            "duration": "4D",
-            "interval": null,
-            "start_date": "2026-03-05",
-            "end_date": "2026-03-09",
-            "active": true
-        },
-        {
-            "habit_id": "d2e6d144-4660-4b01-af47-ee24a311135b",
-            "name": "asdfgh",
-            "type": "bad",
-            "duration": "54D",
-            "interval": null,
-            "start_date": "2026-03-05",
-            "end_date": "2026-04-28",
-            "active": true
-        },
-        {
-            "habit_id": "8f0f0749-5894-4840-b3f0-c16915b2fd94",
-            "name": "1",
-            "type": "bad",
-            "duration": "4W",
-            "interval": 5,
-            "start_date": "2026-03-05",
-            "end_date": "2026-04-02",
-            "active": true
-        },
-        {
-            "habit_id": "bb7ec24b-59e9-4c50-a089-2441e6a9077b",
-            "name": "2",
+            "habit_id": "85c956a8-15f4-423e-a8dc-66ca5b71d1d7",
+            "name": "Pilleman",
             "type": "good",
-            "duration": "44D",
+            "duration": "50D",
             "interval": null,
-            "start_date": "2026-03-05",
-            "end_date": "2026-04-18",
+            "start_date": "2026-03-06",
+            "end_date": "2026-04-25",
             "active": true
         },
         {
-            "habit_id": "9ab9efa8-6ce9-4100-9e1a-0319bb8d890c",
-            "name": "3",
-            "type": "bad",
-            "duration": "3W",
-            "interval": 2,
-            "start_date": "2026-03-02",
-            "end_date": "2026-03-23",
-            "active": true
-        },
-        {
-            "habit_id": "c39d6cf8-86f4-4f3f-87b9-c409ce87d80e",
-            "name": "4",
+            "habit_id": "f5440ec6-b75b-4323-9e5e-70ac0a65d08b",
+            "name": "arsch",
             "type": "good",
-            "duration": "6W",
-            "interval": 6,
-            "start_date": "2026-03-05",
-            "end_date": "2026-04-16",
+            "duration": "50D",
+            "interval": null,
+            "start_date": "2026-03-06",
+            "end_date": "2026-04-25",
             "active": true
         },
         {
-            "habit_id": "2a482681-104c-476b-b2ec-a2b301f35257",
-            "name": "5",
+            "habit_id": "48b39a7c-b209-44aa-a6c0-b2c6046058e9",
+            "name": "ad",
             "type": "bad",
-            "duration": "22D",
+            "duration": "50D",
             "interval": null,
-            "start_date": "2026-03-12",
-            "end_date": "2026-04-03",
+            "start_date": "2026-03-06",
+            "end_date": "2026-04-25",
             "active": true
         }
     ]

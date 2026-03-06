@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import json
 from datetime import datetime
+from utils import get_input
 
 class Habit:
     """ """
@@ -14,7 +15,11 @@ class Habit:
         self.interval = interval #häufigkeit in der woche 
         self.start_date = pd.to_datetime(start_date).date() 
         self.end_date = self.calc_end().date()
+        self.status = self.init_status()
         self.active = active
+    
+    log_id = 1
+    
     def calc_end(self):
         #zerlegen von period
         p_num = int("".join(filter(str.isdigit, self.duration)))
@@ -28,18 +33,43 @@ class Habit:
         return start + pd.DateOffset(**{unit_key: p_num})
     
     def calc_dates(self):
-        #zerlegen von frequency
-        f_num = int("".join(filter(str.isdigit, self.duration)))
-        f_unit = "".join(filter(str.isalpha, self.duration)).upper()
+        """Erstellt eine Liste aller fälligen Daten als Python-date Objekte."""
+        try:
+            f_num = int("".join(filter(str.isdigit, self.duration)))
+            f_unit = "".join(filter(str.isalpha, self.duration)).upper()
+        except ValueError:
+            return []
+
         _liste = []
         if f_unit == 'D':
-            _liste(pd.date_range(start=self.start_date, periods=f_num, freq='56h'))
+            # Täglich: Erzeuge Datumsliste für die Dauer von f_num Tagen
+            _liste = pd.date_range(start=self.start_date, periods=f_num, freq='D').date.tolist()
+            
         elif f_unit == 'W':
-            actual= f"{round(30.4/f_num, 1)}D"
-            for i in pd.date_range(start=self.start_date, periods=f_num, freq='W'):
-                _liste.extend(pd.date_range(start=self.start_date, periods=self.interval, freq=actual))
+            # Wöchentlich: Intervall gibt an, wie oft pro Woche
+            if self.interval:
+                actual_freq = f"{round(7/self.interval, 1)}D"
+                # Loop über die Anzahl der Wochen (f_num)
+                for i in pd.date_range(start=self.start_date, periods=f_num, freq='W'):
+                    dates = pd.date_range(start=i, periods=self.interval, freq=actual_freq).date.tolist()
+                    _liste.extend(dates)
         
-        return list(_liste)
+        # Dubletten entfernen (falls durch Rundung Daten doppelt sind)
+        
+        return sorted(list(set(_liste)))
+    def log(self, _file, status, date ):
+        try:
+            with open(_file, "a", encoding="utf-8") as f:
+                f.write(f"{self.log_id}:{self.habit_id}:{date}:{status}:\n")
+            print(f"Status gespeichert. {status}.")
+            Habit.log_id += 1
+            
+        except Exception as e:
+            print(f"Fehler beim logSpeichern: {e}")
+    
+    def init_status(self):
+        return [[datum, None] for datum in self.calc_dates()]
+        
        
 
 
@@ -53,11 +83,12 @@ class Habit:
         
 
 class Engine:
-    def __init__(self, logger):
+    def __init__(self):
         self.habits = {}
-        self.logger = logger
         self.file_habits= "test.json"
+        self.file_log = "habit.log"
         self.load()
+        self.load_log()
         
     def save(self):
         print()
@@ -81,7 +112,6 @@ class Engine:
             
             with open(self.file_habits, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
-            print(f"Erfolg: {len(data['habits'])} Habits wurden in  gespeichert.")
         except Exception as e:
             print(f"Fehler beim Speichern: {e}")
         
@@ -102,8 +132,37 @@ class Engine:
                 
         except Exception as e:
             print(f"Fehler beim Laden: {e}")
+    
+    def load_log(self):
+        if not os.path.exists(self.file_log):
+            print("Keine Log-Datei gefunden.")
+            return
+        try:
+            with open(self.file_log, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+        except Exception as e:
+            print(f"Fehler beim Lesen des Logs: {e}")
+            
+        for line in lines:
+            arg = line.split(":")
+            id = arg[1]
+            date = pd.to_datetime(arg[2]).date()
+            status = arg[3]
+            print(line)
+            for i,s in enumerate(self.habits[arg[1]].status):
+                
+                if s[0] == date:
+                    s[1] = status
+                    print(f"jooo {arg[3]}")
         
-        
+        Habit.log_id = int(lines[-1][0]) +1
+        print(Habit.log_id)
+                    
+                
+                
+                
+                
     def add(self, name, type, duration, start_date, _interval=None ):
         habit = Habit(name, type, duration, start_date, interval=_interval )
         self.habits[habit.habit_id] = habit
@@ -117,17 +176,30 @@ class Engine:
         
 
     def get_due_habits(self, check_date):
+        """Gibt eine nummerierte Liste von Habit-Objekten zurück, die am check_date fällig sind."""
         due_habits = []
-        check_date = pd.to_datetime(check_date).date()
+        
+        # Wir wandeln das Zieldatum in einen reinen String um: "2026-03-10"
+        target_date_str = pd.to_datetime(check_date).strftime('%Y-%m-%d')
+        
+        print(f"Suche nach: {target_date_str}") # Debug
 
         for habit in self.habits.values():
             if not habit.active:
                 continue
-            if check_date in habit:
+            
+            # Wir holen die Liste und wandeln jedes Element darin in einen String um
+            # Das eliminiert alle Probleme mit datetime.date vs pandas.Timestamp
+            scheduled_dates = habit.calc_dates()
+            scheduled_strings = [d.strftime('%Y-%m-%d') for d in scheduled_dates]
+            
+            # Debug: Nur wenn nötig aktivieren, sonst wird die Konsole geflutet
+            #print(f"Habit {habit.name} Termine: {scheduled_strings}") 
+            
+            if target_date_str in scheduled_strings:
                 due_habits.append(habit)
-                
-        due_habits_list = [(i+1, h) for i, h in enumerate(due_habits)]
-        return due_habits_list
+        
+        return [(i + 1, h) for i, h in enumerate(due_habits)]
         
 
     def check_in(self, habit_id, check_date=datetime.now().date().isoformat()):
@@ -141,20 +213,22 @@ Gelogt wird dann in main.py"""
             print(f"\nHabit: {h.name}")
             print(f"Typ: {h.type}")
             print(f"Datum: {check_date}")
-            print(f"Erfolg? (Y/N): ")
+            print("Erfolg? (Y/N): ")
 
-            user_input = input("--> ").strip().lower()
+            user_input = input("---> ").strip().lower()
 
             if user_input == "y":
+                h.log(self.file_log, "success", check_date)
                 print(f"✅ {h.name} erledigt.")
             elif user_input == "n":
+                h.log(self.file_log, "fail", check_date)
                 print(f"❌ {h.name} nicht erledigt.")
             else:
                 print("Ungültige Eingabe.")
                 return False
             
-            timestamp = datetime.now().date().isoformat()
-            print(f"Check-in für {timestamp}")
+            
+            print(f"Check-in für {check_date}")
             
             return True
         return False
@@ -175,7 +249,7 @@ Gelogt wird dann in main.py"""
 
             #Auswahl Habits
         try:
-            nr = int(input("--> "))
+            nr = int(input("---> "))
             for num, habit in due_habits:
                 if num == nr:
                     self.check_in(habit.habit_id, check_date)
@@ -216,34 +290,67 @@ Gelogt wird dann in main.py"""
         
         # Tabellenkopf
         print(
-            f"\n{'Titel':<15} | {'Typ':<5} | "
-            f"{'Start':<10} | {'Ende':<10} | {'Aktiv':<5} | {'ID':<5} "
+            f"\n{'Titel':<15} | {'Aktiv':^6} | {' Typ':^6}| "
+            f"{'Start':<10} | {'Ende':<10} | {'ID':<5} "
             )
         print("-" * 120)
 
         # Tabelleninhalt
         for h in habits:
+            active_emoji = "🟢" if h.active else "🔴"
+            type_emoji = "😇" if h.type == "good" else "👿"
             
             print(
                 
                 f"{h.name: <15} | "
-                f"{h.type: <5} | "
-                f"{str(h.start_date): <5} | "
-                f"{str(h.end_date): <5} | "
-                f"{str(h.active): <5} | "
-                f"{h.habit_id: <5} | "
+                f"{active_emoji: ^6}| "
+                f"{type_emoji: ^6}| "
+                f"{str(h.start_date): <10} | "
+                f"{str(h.end_date): <10} | "
+                f"{h.habit_id} | "
             )
             
 
-
-
-
-    def active_change(self):
+    def active_change(self, mode):
         """Ändern des Status active eines Habits """
-        
-        pass
+        if mode == "activate":
+            #nur inaktive habits anzeigen
+            habits = [(i + 1, h) for i, h in enumerate(self.habits.values()) if not h.active]
+            if not habits:
+                print("Keine inaktiven Habits vorhanden.")
+                return
+        elif mode == "deactivate":
+            #nur aktive habits anzeigen
+            habits = [(i + 1, h) for i, h in enumerate(self.habits.values()) if h.active]
+            if not habits:
+                print("Keine aktiven Habits vorhanden.")
+                return
+        elif mode == "delete":
+            habits = [(i + 1, h) for i, h in enumerate(self.habits.values())]
+
+        #Habits anzeigen
+        print("\nHabits:")
+        for nr, habit in habits:
+            modeprint = "🟢" if habit.active else "🔴"
+            print(f"{nr}) {modeprint} {habit.name}")
     
-    
+        #Auswählen und Ändern
+        nr = get_input("--> ", cast_type=int)
+        for num, habit in habits:
+            if num == nr:
+                if mode == "delete":
+                    confirm = get_input(f"Soll \"{habit.name}\" wirklich gelöscht werden? (Y/N): ", valid_options=["Y", "N"])
+                    if confirm == "y":
+                        del self.habits[habit.habit_id]
+                        print(f"Habit \"{habit.name}\" wurde erfolgreich entfernt.")
+                else:
+                    #active/inactive umschalten
+                    habit.active = not habit.active
+                    print(f"Habit \"{habit.name}\" ist jetzt {"aktiv" if habit.active else "inaktiv"}.")
+                self.save()
+                return
+                
+                
     
     
         
