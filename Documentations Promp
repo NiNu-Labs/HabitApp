@@ -1,0 +1,18 @@
+Rolle: Handle als erfahrener Software-Architekt mit Fokus auf Clean Code und Dokumentation.
+
+Aufgabe: Ergänze den unten stehenden Code um professionelle Docstrings und Kommentare.
+
+Spezifikationen:
+
+Format: Verwende den [z. B. Google Style / NumPy / JSDoc / Sphinx] Standard.
+
+Inhalt: Beschreibe kurz den Zweck der Funktion/Klasse, alle Parameter (inkl. Datentypen), Rückgabewerte und mögliche Exceptions (Fehler).
+
+Sprache: [Deutsch / Englisch].
+
+Detailgrad: Erkläre bei komplexen Logik-Abschnitten innerhalb der Funktionen kurz das "Warum", nicht nur das "Was".
+
+Zusatz: Falls der Code offensichtliche Verbesserungen im Sinne von Type-Hinting benötigt, implementiere diese direkt.
+
+Code:
+[DEIN CODE HIER EINFÜGEN]

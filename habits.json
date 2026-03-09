@@ -1,0 +1,124 @@
+{
+    "habits": [
+        {
+            "habit_id": "cde7c19f-011d-4f84-8abf-bd33a421ced9",
+            "name": "Sport",
+            "type": "good",
+            "duration": "8W",
+            "interval": 3,
+            "start_date": "2026-03-09",
+            "end_date": "2026-05-04",
+            "active": true
+        },
+        {
+            "habit_id": "0f38d6b2-af62-460d-8b35-2eadf0860e87",
+            "name": "Lesen",
+            "type": "good",
+            "duration": "4W",
+            "interval": 5,
+            "start_date": "2026-03-09",
+            "end_date": "2026-04-06",
+            "active": true
+        },
+        {
+            "habit_id": "57512d86-47d7-43ef-91b4-dbbe65a1e2cc",
+            "name": "Wasser trinken",
+            "type": "good",
+            "duration": "14D",
+            "interval": null,
+            "start_date": "2026-03-09",
+            "end_date": "2026-03-23",
+            "active": true
+        },
+        {
+            "habit_id": "b8a5d44f-1dbc-4cf3-af9f-968983d93c0a",
+            "name": "Rauchen",
+            "type": "bad",
+            "duration": "365D",
+            "interval": null,
+            "start_date": "2026-03-15",
+            "end_date": "2027-03-15",
+            "active": true
+        },
+        {
+            "habit_id": "f9715a51-5191-480e-965a-3fa96f6ef7f0",
+            "name": "Süßigkeiten",
+            "type": "bad",
+            "duration": "28W",
+            "interval": 6,
+            "start_date": "2026-01-01",
+            "end_date": "2026-07-16",
+            "active": true
+        },
+        {
+            "habit_id": "1e2ec1b4-3236-4254-9df1-7c4e18c9802b",
+            "name": "Social Media",
+            "type": "bad",
+            "duration": "10W",
+            "interval": 5,
+            "start_date": "2026-02-15",
+            "end_date": "2026-04-26",
+            "active": true
+        },
+        {
+            "habit_id": "ee556e5a-e7a8-4114-8243-afe85f5642ff",
+            "name": "10.000 Schritte",
+            "type": "good",
+            "duration": "8W",
+            "interval": 6,
+            "start_date": "2026-03-01",
+            "end_date": "2026-04-26",
+            "active": true
+        },
+        {
+            "habit_id": "3de99bbe-5e2d-455e-ae9c-ff5bbc443dde",
+            "name": "Energy Drinks",
+            "type": "bad",
+            "duration": "4W",
+            "interval": 2,
+            "start_date": "2026-03-09",
+            "end_date": "2026-04-06",
+            "active": false
+        },
+        {
+            "habit_id": "9046249d-c092-4960-8236-8bb2d3f17902",
+            "name": "Lernen",
+            "type": "good",
+            "duration": "10D",
+            "interval": null,
+            "start_date": "2026-03-09",
+            "end_date": "2026-03-19",
+            "active": true
+        },
+        {
+            "habit_id": "a789e87d-3675-4344-b4d7-91a1bebbe289",
+            "name": "Müll rausbringen",
+            "type": "good",
+            "duration": "55W",
+            "interval": 1,
+            "start_date": "2026-03-09",
+            "end_date": "2027-03-29",
+            "active": true
+        },
+        {
+            "habit_id": "09d1d227-cd72-48dd-b8dd-9497176ae618",
+            "name": "Hundesitting",
+            "type": "good",
+            "duration": "4W",
+            "interval": 1,
+            "start_date": "2026-04-01",
+            "end_date": "2026-04-29",
+            "active": false
+        },
+        {
+            "habit_id": "5689fec4-ff3c-44bd-9896-a59d23f84764",
+            "name": "Test",
+            "type": "bad",
+            "duration": "3W",
+            "interval": 5,
+            "start_date": "2026-02-20",
+            "end_date": "2026-03-13",
+            "active": true
+        }
+    ]
+}

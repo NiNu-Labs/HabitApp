@@ -16,6 +16,7 @@ class Habit:
         self.start_date = pd.to_datetime(start_date).date() 
         self.end_date = self.calc_end().date()
         self.status = self.init_status()
+        self.current_streak = 0
         self.active = active
     
     log_id = 1
@@ -57,6 +58,37 @@ class Habit:
         # Dubletten entfernen (falls durch Rundung Daten doppelt sind)
         
         return sorted(list(set(_liste)))
+        
+    def calc_streak(self):
+        
+        current_date = datetime.now().date().isoformat()
+        current_streak = 0
+        best_streak = 0
+
+        for status in self.status:
+            if status[1] is None or status[1] == "skip":
+                continue
+            
+            if status[1] == "success":
+                current_streak += 1
+                #streak überschreiben wenn current_streak > best_streak
+                if current_streak > best_streak:
+                    best_streak = current_streak
+                if status[0] == current_date:
+                    break
+            else: #status == "fail"
+                current_streak = 0    
+        return {"current":current_streak, "best":best_streak}
+
+    def next_due(self):
+        """Gibt das nächste fällige Datum zurück"""
+        today = datetime.now().date()
+        if self.active:
+            for date, status in self.status:
+                if date >= today and status is None:
+                    return date
+        return None
+
     def log(self, _file, status, date ):
         try:
             with open(_file, "a", encoding="utf-8") as f:
@@ -67,16 +99,34 @@ class Habit:
         except Exception as e:
             print(f"Fehler beim logSpeichern: {e}")
     
+    
     def init_status(self):
         return [[datum, None] for datum in self.calc_dates()]
+    
+    def status_statistik(self):
+        count = len(self.status)
+        success = [item for item in self.status if item[1] == "success"]
+        fail = [item for item in self.status if item[1] == "fail"]
+        skip = [item for item in self.status if item[1] == "skip"]
+
+        #check ob current streak die beste ist
+        streaks = self.calc_streak()
         
+        if streaks["current"] < streaks["best"]:
+            streak_text = f"{streaks['current']} (Best: {streaks['best']})"
+        else:
+            streak_text = f"{streaks['current']}"
+
+        return {
+            "count":count, 
+            "success":[len(success), (len(success) / count) * 100 ], 
+            "fail":[len(fail), (len(fail) / count * 100)],
+            "skip":len(skip),            
+            "streak_display": streak_text
+            }
        
 
 
-            
-    # "3x pro Woche" bilden wir als '3 mal pro Woche' ab (z.B. Mo, Mi, Fr)
-    # Hier nutzen wir eine wöchentliche Frequenz mit Anzahl
-    # Einfacher Workaround für '3x pro Woche': Alle 2.3 Tage oder manuell:
 
         
 
@@ -85,7 +135,7 @@ class Habit:
 class Engine:
     def __init__(self):
         self.habits = {}
-        self.file_habits= "test.json"
+        self.file_habits= "habits.json"
         self.file_log = "habit.log"
         self.load()
         self.load_log()
@@ -149,20 +199,14 @@ class Engine:
             id = arg[1]
             date = pd.to_datetime(arg[2]).date()
             status = arg[3]
-            print(line)
-            for i,s in enumerate(self.habits[arg[1]].status):
+            
+            for i,s in enumerate(self.habits[id].status):
                 
                 if s[0] == date:
                     s[1] = status
-                    print(f"jooo {arg[3]}")
-        
+                
         Habit.log_id = int(lines[-1][0]) +1
-        print(Habit.log_id)
-                    
-                
-                
-                
-                
+          
     def add(self, name, type, duration, start_date, _interval=None ):
         habit = Habit(name, type, duration, start_date, interval=_interval )
         self.habits[habit.habit_id] = habit
@@ -172,7 +216,7 @@ class Engine:
 
 
     def print_habit(self, id):
-        print(dir(self.habits[id]))
+        print(dir(self.habits[id].status_statistik()))
         
 
     def get_due_habits(self, check_date):
@@ -205,31 +249,31 @@ class Engine:
     def check_in(self, habit_id, check_date=datetime.now().date().isoformat()):
         """Eintragen und abhaken der Habits
 Gelogt wird dann in main.py"""
-# errechnen welche habits an diesem tag dran sind
-# start_date *
+        # errechnen welche habits an diesem tag dran sind
+        # start_date *
         if habit_id in self.habits.keys():
             h = self.habits[habit_id]
-
+            
             print(f"\nHabit: {h.name}")
             print(f"Typ: {h.type}")
             print(f"Datum: {check_date}")
-            print("Erfolg? (Y/N): ")
+            print("Status: (Y = Success, N = Fail, S = Skip): ")
 
-            user_input = input("---> ").strip().lower()
-
-            if user_input == "y":
+            user_input = get_input("---> ", cast_type=str, valid_options=["Y","N","S"]).strip().upper()
+            
+            #check_date in date-Objekt umwandeln
+            
+            check_date = pd.to_datetime(check_date)
+            
+            if user_input == "Y":
                 h.log(self.file_log, "success", check_date)
-                print(f"✅ {h.name} erledigt.")
-            elif user_input == "n":
+                print(f"✅ {h.name} am {check_date.strftime("%d-%m-%Y")} erledigt.")
+            elif user_input == "N":
                 h.log(self.file_log, "fail", check_date)
-                print(f"❌ {h.name} nicht erledigt.")
-            else:
-                print("Ungültige Eingabe.")
-                return False
-            
-            
-            print(f"Check-in für {check_date}")
-            
+                print(f"❌ {h.name} am {check_date.strftime("%d-%m-%Y")} nicht erledigt.")
+            elif user_input == "S":
+                h.log(self.file_log, "skip", check_date)
+                print(f"⏩ {h.name} am {check_date.strftime("%d-%m-%Y")} übersprungen.")
             return True
         return False
     
@@ -248,15 +292,14 @@ Gelogt wird dann in main.py"""
             print(f"{nr}) {habit.name}")
 
             #Auswahl Habits
-        try:
-            nr = int(input("---> "))
-            for num, habit in due_habits:
-                if num == nr:
-                    self.check_in(habit.habit_id, check_date)
-                    break
+        
+        nr = get_input("---> ", cast_type=int)
+        for num, habit in due_habits:
+            if num == nr:
+                self.check_in(habit.habit_id, check_date)
+                break
+        return True
 
-        except:
-            print("Bitte eine gültige Nummer eingeben!")
         
 
     def list_habits(self, sort_by=None):
@@ -268,10 +311,7 @@ Gelogt wird dann in main.py"""
         if sort_by is not None:
             sort_by = sort_by.lower()
 
-            if sort_by in ["id", "ID", "Id"]:
-                habits.sort(key=lambda h: h.habit_id)
-
-            elif sort_by in ["titel", "title", "name"]:
+            if sort_by in ["titel", "title", "name"]:
                 habits.sort(key=lambda h: h.name.lower())
 
             elif sort_by in ["type", "type"]:
@@ -279,6 +319,9 @@ Gelogt wird dann in main.py"""
 
             elif sort_by == "start":
                 habits.sort(key=lambda h: h.start_date)
+
+            elif sort_by == "next":
+                habits.sort(key=lambda h: str(h.next_due()) or datetime.max.date())
         
             elif sort_by in ["end", "ende"]:
                 habits.sort(key=lambda h: h.end_date)
@@ -286,57 +329,78 @@ Gelogt wird dann in main.py"""
             elif sort_by in ["aktive", "aktiv"]:
                 habits.sort(key=lambda h: h.active, reverse=True)
 
-        # NEXT STATUS STREAK sobald log.csv stehen hier einfügen
-        
+        # Maximale Namenslänge finden
+        max_name_len = max([len(h.name) for h in habits])
         # Tabellenkopf
         print(
-            f"\n{'Titel':<15} | {'Aktiv':^6} | {' Typ':^6}| "
-            f"{'Start':<10} | {'Ende':<10} | {'ID':<5} "
+            f"\n{'Titel':<{max_name_len}} | {'Aktiv':^6} | {'Typ':^6}  | "
+            f"{'Start':^10} | {'Next':^10} | {'Ende':^10} | {'✅ /❌ /⏩':^6}  | {'🔥 Streak':<3}"
             )
-        print("-" * 120)
+        print("-" * (max_name_len + 60))
 
         # Tabelleninhalt
         for h in habits:
             active_emoji = "🟢" if h.active else "🔴"
             type_emoji = "😇" if h.type == "good" else "👿"
+            stat = h.status_statistik()
             
+            next_date = h.next_due()
+            if next_date:
+                next_str = next_date.strftime('%d-%m-%Y')
+            else:
+                next_str = "----------"
+                
             print(
                 
-                f"{h.name: <15} | "
-                f"{active_emoji: ^6}| "
-                f"{type_emoji: ^6}| "
-                f"{str(h.start_date): <10} | "
-                f"{str(h.end_date): <10} | "
-                f"{h.habit_id} | "
+                f"{h.name: <{max_name_len}} | "
+                f"{active_emoji: ^5} | "
+                f"{type_emoji: ^6} | "
+                f"{h.start_date.strftime('%d-%m-%Y'): ^10} | " 
+                f"{next_str: ^10} | "                 
+                f"{h.end_date.strftime('%d-%m-%Y'): ^10} | "
+                f" {stat['success'][0]:^2}/ {stat['fail'][0]:^2}/ {stat['skip']:^2} | "
+                f" {stat['streak_display']:<3}"
             )
+        return True
+
+                
             
 
     def active_change(self, mode):
         """Ändern des Status active eines Habits """
         if mode == "activate":
             #nur inaktive habits anzeigen
-            habits = [(i + 1, h) for i, h in enumerate(self.habits.values()) if not h.active]
+            habits = [ h for i, h in enumerate(self.habits.values()) if not h.active]
             if not habits:
                 print("Keine inaktiven Habits vorhanden.")
                 return
         elif mode == "deactivate":
             #nur aktive habits anzeigen
-            habits = [(i + 1, h) for i, h in enumerate(self.habits.values()) if h.active]
+            habits = [h for i, h in enumerate(self.habits.values()) if h.active]
             if not habits:
                 print("Keine aktiven Habits vorhanden.")
                 return
         elif mode == "delete":
-            habits = [(i + 1, h) for i, h in enumerate(self.habits.values())]
+            habits = [h for i, h in enumerate(self.habits.values())]
 
         #Habits anzeigen
-        print("\nHabits:")
-        for nr, habit in habits:
+        
+
+        # Alle Habits für die maximale Nummer (nicht gefiltert)
+        
+        max_nr_global = len(habits) 
+        breite = len(str(max_nr_global))  # dynamische breite der Auswahlnummern bei 10 = xx / bei 100 = xxx
+        print("\nHabits: ")
+        for nr, habit in enumerate(habits):
+            
             modeprint = "🟢" if habit.active else "🔴"
-            print(f"{nr}) {modeprint} {habit.name}")
+            print(f"{nr+1:{breite}}) {modeprint} {habit.name}")
     
         #Auswählen und Ändern
-        nr = get_input("--> ", cast_type=int)
-        for num, habit in habits:
+        nr = get_input("---> ", cast_type=int)
+        if type(nr) is int:
+            nr -= 1
+        for num, habit in enumerate(habits):
             if num == nr:
                 if mode == "delete":
                     confirm = get_input(f"Soll \"{habit.name}\" wirklich gelöscht werden? (Y/N): ", valid_options=["Y", "N"])
@@ -348,11 +412,9 @@ Gelogt wird dann in main.py"""
                     habit.active = not habit.active
                     print(f"Habit \"{habit.name}\" ist jetzt {"aktiv" if habit.active else "inaktiv"}.")
                 self.save()
-                return
-                
-                
-    
-    
-        
-    
-    
+            if nr == "exit":
+                pass
+            else:
+                print(f"Fehler: Wähle eine Nummer von 1 bis {max_nr_global}.")    
+            return
+        return True
